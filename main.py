@@ -10,12 +10,13 @@ import uuid
 import glob
 import AppOpener
 import pygetwindow
+from CustomTkinterMessagebox import CTkMessagebox
 
 current_date: datetime = datetime.now()
 _init: bool = False
 execution: bool = False
 number_generator: any = None
-    
+
 def whatsapp_actions(_init: bool = False, _text: str = "+000000000000") -> None:
     # pyautogui.displayMousePosition()
     if _init:
@@ -74,7 +75,10 @@ def application_actions(_text: str = "+000000000000", _failsafe: bool = True, _p
     _init = True  
     unique_id: uuid.UUID = uuid.uuid4()
     screenshot: pyautogui.Image = pyautogui.screenshot(region=(0, 0, 1600, 1600))
-    screenshot.save(f"assets/{application}/screenshots/{_text}_{unique_id}.png")
+    directory = f"assets/{application}/screenshots"
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    screenshot.save(f"{directory}/{_text}_{unique_id}.png")
     _result: pyautogui.Box | None = pyautogui.locateOnScreen(f'assets/{application}/reference.png', confidence=0.9)
     _result_found = not _result
     if _result_found and application == "Telegram":
@@ -106,12 +110,21 @@ def macro(application: str) -> None:
     
 def run_application(application: str) -> None:
     global execution, number_generator
-    AppOpener.open(f"{application}", output=False)
+    try:
+        AppOpener.open(f"{application}", output=False)
+    except:
+        AppOpener.check.check_json()
+        AppOpener.check.app_names()
+        try:
+            AppOpener.open(f"{application}", output=False)
+        except:
+            CTkMessagebox.messagebox(title='Error', text=f"Failed to open {application}", sound='on', button_text='OK', center=True)
+            return
     window = pygetwindow.getWindowsWithTitle(f'{application}')
     if len(window) > 0:
-        print(window)
         window[0].resizeTo(800, 600)
         window[0].moveTo(0, 0)
+        window[0].activate()
     else:
         for _ in range(5):
             try:
@@ -120,9 +133,10 @@ def run_application(application: str) -> None:
                 if len(window) > 0:
                     window[0].resizeTo(800, 600)
                     window[0].moveTo(0, 0)
+                    window[0].activate()
                     break
             except Exception as e:
-                print(f"Error: {e}")
+                CTkMessagebox.messagebox(title='Error', text=f"Error: {e}", sound='on', button_text='OK', center=True)
                 continue
     number_generator = number_gen.generate_numbers(_cont_number=data(get_application_name()))
     execution = True
@@ -134,7 +148,7 @@ def stop_application(application: str) -> None:
         _init = False
         AppOpener.close(f"{application}", output=False)
     except subprocess.CalledProcessError:
-        print(f"Failed to stop {application}")
+        CTkMessagebox.messagebox(title='Error', text=f"Failed to stop {application}", sound='on', button_text='OK', center=True)
 
 app: customtkinter.CTk = customtkinter.CTk()
 app.geometry('600x500+800+0')
@@ -169,7 +183,6 @@ def log_message(message: str) -> None:
     log_textbox.see(customtkinter.END)
     
 log_message("Application started")
-
 macro(get_application_name())
 
 app.mainloop()
