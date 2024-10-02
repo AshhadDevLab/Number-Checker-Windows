@@ -16,36 +16,46 @@ _init: bool = False
 execution: bool = False
 number_generator: any = None
     
-def whatsapp_actions(_x: int = 250, _y: int = 75, _x_sec: int = 520, _y_sec: int = 105, _init: bool = False, _text: str = "+000000000000") -> None:
+def whatsapp_actions(_init: bool = False, _text: str = "+000000000000") -> None:
     # pyautogui.displayMousePosition()
     if _init:
         pyautogui.hotkey('ctrl', 'a')
         pyautogui.press('backspace')
         pyautogui.write(f'{_text}')
     else:
-        pyautogui.moveTo(_x, _y)
-        pyautogui.click(_x, _y)
-        pyautogui.moveTo(_x_sec, _y_sec)
-        pyautogui.click(_x_sec, _y_sec)
+        pyautogui.moveTo(250, 75)
+        pyautogui.click(250, 75)
+        pyautogui.moveTo(275, 215)
+        pyautogui.click(275, 215)
         pyautogui.hotkey('ctrl', 'a')
         pyautogui.press('backspace')
         pyautogui.write(f'{_text}')
 
-def telegram_actions(_x: int = 265, _y: int = 52, _x_sec: int = 295, _y_sec: int = 270, _x_thir: int = 335, _y_thir: int = 445, _init: bool = False, _text: str = "+000000000000") -> None:
-    global _result_found
+def telegram_actions(_init: bool = False, _text: str = "+000000000000") -> None:
     if _init:
-        if not _result_found:
-            pyautogui.moveTo(_x_thir, _y_thir)
-        pyautogui.press('backspace', presses=13)
+        pyautogui.moveTo(500, 445)
+        pyautogui.click(500, 445)
         pyautogui.write(f'{_text}')
-        pyautogui.moveTo(_x_sec, _y_sec)
+        pyautogui.press("tab", 2)
+        pyautogui.hotkey('ctrl', 'a')
+        pyautogui.press('backspace')
+        pyautogui.write(f'{_text}')
+        pyautogui.moveTo(560, 445)
+        pyautogui.click(560, 445)
     else:
-        pyautogui.moveTo(_x, _y)
-        pyautogui.click(_x, _y)
-        pyautogui.press(keys="down", presses=2)
-        pyautogui.press(keys="enter")
+        pyautogui.moveTo(30, 50)
+        pyautogui.click(30, 50)
+        pyautogui.moveTo(30, 265)
+        pyautogui.click(30, 265)
+        pyautogui.moveTo(280, 550)
+        pyautogui.click(280, 550)
         pyautogui.write(f'{_text}')
-        pyautogui.moveTo(_x_sec, _y_sec)
+        pyautogui.press("tab", 2)
+        pyautogui.hotkey('ctrl', 'a')
+        pyautogui.press('backspace')
+        pyautogui.write(f'{_text}')
+        pyautogui.moveTo(530, 445)
+        pyautogui.click(530, 445)
 
 def write_data(application: str, _text: str, _no_result: bool) -> None:
     with open(f'data/{application}/{datetime.now().strftime("%Y-%m-%d")}.csv', mode='a', newline='') as file:
@@ -66,11 +76,10 @@ def application_actions(_text: str = "+000000000000", _failsafe: bool = True, _p
     screenshot: pyautogui.Image = pyautogui.screenshot(region=(0, 0, 1600, 1600))
     screenshot.save(f"assets/{application}/screenshots/{_text}_{unique_id}.png")
     _result: pyautogui.Box | None = pyautogui.locateOnScreen(f'assets/{application}/reference.png', confidence=0.9)
-    _result_found = bool(_result)
-    if application == "WhatsApp":
-        write_data(application, _text, _no_result=_result)
-    else:
-        write_data(application, _text, _no_result=not _result)
+    _result_found = not _result
+    if _result_found and application == "Telegram":
+        _init = False
+    write_data(application, _text, _no_result=_result)
 
 def data(application: str) -> str | None:
     list_of_files: list[str] = glob.glob(f'data/{application}/*.csv')
@@ -97,24 +106,24 @@ def macro(application: str) -> None:
     
 def run_application(application: str) -> None:
     global execution, number_generator
-    try:
-        AppOpener.open(f"{application}", output=False)
-        window = pygetwindow.getWindowsWithTitle(f'{application}')
-        if len(window) > 0:
-            window[0].size = (800, 600)
-            window[0].move(0, 0)
-        else:
-            for _ in range(5):
-                try:
-                    time.sleep(1)
-                    window = pygetwindow.getWindowsWithTitle(f'{application}')
-                    window[0].size = (800, 600)
-                    window[0].move(0, 0)
+    AppOpener.open(f"{application}", output=False)
+    window = pygetwindow.getWindowsWithTitle(f'{application}')
+    if len(window) > 0:
+        print(window)
+        window[0].resizeTo(800, 600)
+        window[0].moveTo(0, 0)
+    else:
+        for _ in range(5):
+            try:
+                time.sleep(1)
+                window = pygetwindow.getWindowsWithTitle(f'{application}')
+                if len(window) > 0:
+                    window[0].resizeTo(800, 600)
+                    window[0].moveTo(0, 0)
                     break
-                except:
-                    continue
-    except subprocess.CalledProcessError:
-        print(f"Failed to start {application}")
+            except Exception as e:
+                print(f"Error: {e}")
+                continue
     number_generator = number_gen.generate_numbers(_cont_number=data(get_application_name()))
     execution = True
 
